@@ -1,0 +1,12 @@
+{
+  "dataset": {
+    "content_image_path": "./images/content/0005.png",
+    "style_image_path": "./images/style/009.jpg",
+    "img_size": 512
+  },
+  "experiment": {
+    "num_epochs": 1000,
+    "style_weight": 1000000,
+    "content_weight": 0.5
+  }
+}

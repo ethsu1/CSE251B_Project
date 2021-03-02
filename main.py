@@ -1,0 +1,106 @@
+from utils import *
+from file_utils import *
+from model import *
+from PIL import Image
+
+import copy
+import matplotlib.pyplot as plt
+import sys
+import torch
+import torchvision.models as models
+import torchvision.transforms as transforms
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+
+# assigning device based on GPU/CUDA availability
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# load config
+config_name = 'default'
+if len(sys.argv) > 1:
+  config_name = sys.argv[1]
+config_data = read_file_in_dir('./', config_name + '.json')
+if config_data is None:
+  raise Exception("Configuration file doesn't exist: ", config_name)
+
+# load config vars
+img_size = config_data['dataset']['img_size']
+style_path = config_data['dataset']['style_image_path']
+content_path = config_data['dataset']['content_image_path']
+num_epochs = config_data['experiment']['num_epochs']
+style_weight = config_data['experiment']['style_weight']
+content_weight = config_data['experiment']['content_weight']
+
+# get image
+content_img = img_loader(content_path, img_size, device)
+style_img = img_loader(style_path, img_size, device)
+
+assert style_img.size() == content_img.size(
+), "we need to import style and content images of the same size"
+
+# turn on interactive mode
+plt.ion()
+
+# show style and content image
+plt.figure()
+imshow(style_img, title='Style Image')
+plt.figure()
+imshow(content_img, title='Content Image')
+
+# load frozen pretrained vgg19 model
+cnn = models.vgg19(pretrained=True).features.to(device).eval()
+
+# used to build style transfer model
+cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
+cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
+
+# copy of content image
+input_img = content_img.clone()
+
+
+def get_input_optimizer(input_img):
+  optimizer = optim.LBFGS([input_img.requires_grad_()])
+  return optimizer
+
+
+def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, style_img, input_img, num_steps, style_weight, content_weight):
+  print('Building the style transfer model..')
+  model, style_losses, content_losses = get_style_model_and_losses(
+      cnn, normalization_mean, normalization_std, style_img, content_img, device)
+  optimizer = get_input_optimizer(input_img)
+  print('Optimizing..')
+  run = [0]
+  while run[0] <= num_steps:
+    def closure():
+      input_img.data.clamp_(0, 1)
+      optimizer.zero_grad()
+      model(input_img)
+      style_score = 0
+      content_score = 0
+      for sl in style_losses:
+        style_score += sl.loss
+      for cl in content_losses:
+        content_score += cl.loss
+      style_score *= style_weight
+      content_score *= content_weight
+      loss = style_score + content_score
+      loss.backward()
+      run[0] += 1
+      if run[0] % 50 == 0:
+        print("run {}:".format(run))
+        print('Style Loss : {:4f} Content Loss: {:4f}'.format(
+            style_score.item(), content_score.item()))
+        print()
+      return style_score + content_score
+    optimizer.step(closure)
+  input_img.data.clamp_(0, 1)
+  return input_img
+
+
+output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
+                            content_img, style_img, input_img, num_epochs, style_weight, content_weight)
+plt.figure()
+imshow(output, title='Output Image')
+plt.ioff()
+plt.show()
