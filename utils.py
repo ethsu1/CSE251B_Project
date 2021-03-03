@@ -55,4 +55,3 @@ def plot_stats(title, y_title, x_title, y_data, x_data=[], legend=[], path="./fi
   plt.legend()
   title = title.replace(" ", "_")
   plt.savefig(path+title+".png")
-  
