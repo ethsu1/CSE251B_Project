@@ -31,6 +31,10 @@ content_path = config_data['dataset']['content_image_path']
 num_epochs = config_data['experiment']['num_epochs']
 style_weight = config_data['experiment']['style_weight']
 content_weight = config_data['experiment']['content_weight']
+style_layers = config_data['experiment']['style_layers']
+content_layers = config_data['experiment']['content_layers']
+lr = config_data['experiment']['learning_rate']
+output_title = config_data['experiment']['output_title']
 
 # get image
 content_img = img_loader(content_path, img_size, device)
@@ -56,18 +60,21 @@ cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
 cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
 
 # copy of content image
-input_img = content_img.clone()
-
+# input_img = content_img.clone()
+# random noise
+input_img = torch.randn(content_img.data.size(), device=device)
 
 def get_input_optimizer(input_img):
-  optimizer = optim.LBFGS([input_img.requires_grad_()])
+  optimizer = optim.LBFGS([input_img.requires_grad_()], lr=lr)
   return optimizer
 
 
-def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, style_img, input_img, num_steps, style_weight, content_weight):
+def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, style_img, input_img, num_steps, style_weight, content_weight, content_layers, style_layers):
   print('Building the style transfer model..')
   model, style_losses, content_losses = get_style_model_and_losses(
-      cnn, normalization_mean, normalization_std, style_img, content_img, device)
+      cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers)
+  best_img = input_img
+  lowest_loss = 1e12
   optimizer = get_input_optimizer(input_img)
   print('Optimizing..')
   run = [0]
@@ -93,14 +100,17 @@ def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, 
             style_score.item(), content_score.item()))
         print()
       return style_score + content_score
-    optimizer.step(closure)
-  input_img.data.clamp_(0, 1)
-  return input_img
-
+    loss = optimizer.step(closure).item()
+    if loss < lowest_loss:
+      lowest_loss = loss
+      best_img = input_img.clone()
+  best_img.data.clamp_(0, 1)
+  return best_img
 
 output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
-                            content_img, style_img, input_img, num_epochs, style_weight, content_weight)
+                            content_img, style_img, input_img, num_epochs, style_weight, content_weight, content_layers, style_layers)
 plt.figure()
-imshow(output, title='Output Image')
+imshow(output, title=output_title)
 plt.ioff()
 plt.show()
+plt.savefig(fname='./images/output/' + os.path.splitext(os.path.basename(content_path))[0] + '+' + os.path.splitext(os.path.basename(style_path))[0] + output_title + '.png')

@@ -5,8 +5,12 @@
     "img_size": 1024
   },
   "experiment": {
+    "output_title": "conv5_1",
     "num_epochs": 1000,
     "style_weight": 1000000,
-    "content_weight": 1
+    "content_weight": 1,
+    "learning_rate": 0.99,
+    "content_layers": ["conv4_2"],
+    "style_layers": ["conv1_1", "conv2_1", "conv3_1", "conv4_1", "conv5_1"]
   }
 }
