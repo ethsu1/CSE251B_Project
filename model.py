@@ -43,14 +43,70 @@ class Normalization(nn.Module):
 
 
 # layers used by Gatys et al.
-content_layers_default = ['conv4_2']
-style_layers_default = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']
+'''content_layers_default = ['conv4_2']
+style_layers_default = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']'''
 
 
-def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
-                               style_img, content_img, device,
-                               content_layers=content_layers_default,
-                               style_layers=style_layers_default):
+def resnet_model_and_losses(cnn, style_img, content_img, device):
+  cnn = copy.deepcopy(cnn)
+  content_losses = []
+  style_losses = []
+  i = 1
+
+  # refer to resnet_architecture.txt for ResNet34 architecture
+  # Benson: this is all hard-coded for now since I was just testing stuff out
+  # lr = 1.5 is pretty good
+
+  model = nn.Sequential(cnn.conv1, cnn.bn1, cnn.relu, cnn.maxpool, cnn.layer1)
+
+  # layer 1 - style
+  target_feature = model(style_img).detach()
+  style_loss = StyleLoss(target_feature)
+  model[4].add_module("style_loss_{}".format(i), style_loss)
+  style_losses.append(style_loss)
+  i += 1
+
+  # layer 2
+  model.add_module('layer2', cnn.layer2)
+
+  # layer 2 - style
+  target_feature = model(style_img).detach()
+  style_loss = StyleLoss(target_feature)
+  model[5].add_module("style_loss_{}".format(i), style_loss)
+  style_losses.append(style_loss)
+  i += 1
+
+  # layer 3
+  model.add_module('layer3', cnn.layer3)
+
+  # layer 3 - style
+  target_feature = model(style_img).detach()
+  style_loss = StyleLoss(target_feature)
+  model[6].add_module("style_loss_{}".format(i), style_loss)
+  style_losses.append(style_loss)
+  i += 1
+
+  # layer 4 (in between 0 and 1)
+  model.add_module('layer4', nn.Sequential(cnn.layer4[0]))
+
+  # layer 4 - style
+  target_feature = model(style_img).detach()
+  style_loss = StyleLoss(target_feature)
+  model[7].add_module("style_loss_{}".format(i), style_loss)
+  style_losses.append(style_loss)
+  i += 1
+
+  # layer 4 - content
+  target = model(content_img).detach()
+  content_loss = ContentLoss(target)
+  model[7].add_module("content_loss", content_loss)
+  content_losses.append(content_loss)
+
+  return model, style_losses, content_losses
+
+
+def get_style_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers):
+  # RENAMING LAYERS
   cnn = copy.deepcopy(cnn)
   normalization = Normalization(
       normalization_mean, normalization_std).to(device)
@@ -67,7 +123,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
       i += 1
     elif isinstance(layer, nn.MaxPool2d):
       name = 'pool_{}'.format(block)
-      # Replace with average pooling as suggested by Gatys et al.
+      # replace with average pooling as suggested by Gatys et al.
       layer = nn.AvgPool2d(layer.kernel_size, layer.stride)
       block += 1
       i = 1
@@ -77,6 +133,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
       raise RuntimeError(
           'Unrecognized layer: {}'.format(layer.__class__.__name__))
     model.add_module(name, layer)
+    # GETTING LOSSES
     if name in content_layers:
       target = model(content_img).detach()
       content_loss = ContentLoss(target)

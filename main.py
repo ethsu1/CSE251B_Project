@@ -25,16 +25,18 @@ if config_data is None:
   raise Exception("Configuration file doesn't exist: ", config_name)
 
 # load config vars
-img_size = config_data['dataset']['img_size']
-style_path = config_data['dataset']['style_image_path']
-content_path = config_data['dataset']['content_image_path']
-num_epochs = config_data['experiment']['num_epochs']
-style_weight = config_data['experiment']['style_weight']
-content_weight = config_data['experiment']['content_weight']
-style_layers = config_data['experiment']['style_layers']
 content_layers = config_data['experiment']['content_layers']
+content_path = config_data['dataset']['content_image_path']
+content_weight = config_data['experiment']['content_weight']
 lr = config_data['experiment']['learning_rate']
+img_size = config_data['dataset']['img_size']
+model_name = config_data['experiment']['model_name']
+num_epochs = config_data['experiment']['num_epochs']
 output_title = config_data['experiment']['output_title']
+random_noise = config_data['experiment']['random_noise']
+style_path = config_data['dataset']['style_image_path']
+style_weight = config_data['experiment']['style_weight']
+style_layers = config_data['experiment']['style_layers']
 
 # get image
 content_img = img_loader(content_path, img_size, device)
@@ -52,17 +54,24 @@ imshow(style_img, title='Style Image')
 plt.figure()
 imshow(content_img, title='Content Image')
 
-# load frozen pretrained vgg19 model
-cnn = models.vgg19(pretrained=True).features.to(device).eval()
+# load frozen pretrained model (depending on config)
+if model_name == 'resnet34':
+  cnn = models.resnet34(pretrained=True).to(device).eval()
+else:
+  # default
+  cnn = models.vgg19(pretrained=True).features.to(device).eval()
 
 # used to build style transfer model
 cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
 cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
 
 # copy of content image
-# input_img = content_img.clone()
+if random_noise == False:
+  input_img = content_img.clone()
 # random noise
-input_img = torch.randn(content_img.data.size(), device=device)
+else:
+  input_img = torch.randn(content_img.data.size(), device=device)
+
 
 def get_input_optimizer(input_img):
   optimizer = optim.LBFGS([input_img.requires_grad_()], lr=lr)
@@ -71,8 +80,14 @@ def get_input_optimizer(input_img):
 
 def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, style_img, input_img, num_steps, style_weight, content_weight, content_layers, style_layers):
   print('Building the style transfer model..')
-  model, style_losses, content_losses = get_style_model_and_losses(
-      cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers)
+  if model_name == 'resnet34':
+    print('Building ResNet34 model!')
+    model, style_losses, content_losses = resnet_model_and_losses(
+        cnn, style_img, content_img, device)
+  else:
+    print('Building VGG19 model!')
+    model, style_losses, content_losses = get_style_model_and_losses(
+        cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers)
   best_img = input_img
   lowest_loss = 1e12
   optimizer = get_input_optimizer(input_img)
@@ -107,10 +122,12 @@ def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, 
   best_img.data.clamp_(0, 1)
   return best_img
 
+
 output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
                             content_img, style_img, input_img, num_epochs, style_weight, content_weight, content_layers, style_layers)
 plt.figure()
 imshow(output, title=output_title)
 plt.ioff()
 plt.show()
-plt.savefig(fname='./images/output/' + os.path.splitext(os.path.basename(content_path))[0] + '+' + os.path.splitext(os.path.basename(style_path))[0] + output_title + '.png')
+plt.savefig(fname='./images/output/' + os.path.splitext(os.path.basename(content_path))
+            [0] + '+' + os.path.splitext(os.path.basename(style_path))[0] + output_title + '.png')
