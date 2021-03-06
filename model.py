@@ -42,16 +42,20 @@ class Normalization(nn.Module):
     return (img - self.mean) / self.std
 
 
-def resnet_model_and_losses(cnn, style_img, content_img, device):
+def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device):
   cnn = copy.deepcopy(cnn)
   content_losses = []
   style_losses = []
   i = 1
 
   # refer to resnet_architecture.txt for ResNet34 architecture
-  # ideal: lr = 1.65, style_weight = 10000000000
+  # ideal: lr = 0.75, style_weight = 1000000000
 
-  model = nn.Sequential(cnn.conv1, cnn.bn1, cnn.relu, cnn.maxpool)
+  normalization = Normalization(
+      normalization_mean, normalization_std).to(device)
+
+  model = nn.Sequential(normalization, cnn.conv1,
+                        cnn.bn1, cnn.relu, cnn.maxpool)
 
   # layer 1 (0)
   model.add_module('layer1', nn.Sequential(cnn.layer1[0]))
@@ -59,13 +63,13 @@ def resnet_model_and_losses(cnn, style_img, content_img, device):
   # layer 1 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
   style_loss = StyleLoss(target_feature)
-  model[4].add_module("style_loss_{}".format(i), style_loss)
+  model[5].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
 
   # layer 1 (1 - 2)
-  model[4].add_module('layer1_1', cnn.layer1[1])
-  model[4].add_module('layer1_2', cnn.layer1[2])
+  model[5].add_module('layer1_1', cnn.layer1[1])
+  model[5].add_module('layer1_2', cnn.layer1[2])
 
   # layer 2 (0)
   model.add_module('layer2', nn.Sequential(cnn.layer2[0]))
@@ -73,14 +77,14 @@ def resnet_model_and_losses(cnn, style_img, content_img, device):
   # layer 2 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
   style_loss = StyleLoss(target_feature)
-  model[5].add_module("style_loss_{}".format(i), style_loss)
+  model[6].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
 
   # layer 2 (1 - 2)
-  model[5].add_module('layer2_1', cnn.layer2[1])
-  model[5].add_module('layer2_2', cnn.layer2[2])
-  model[5].add_module('layer2_3', cnn.layer2[3])
+  model[6].add_module('layer2_1', cnn.layer2[1])
+  model[6].add_module('layer2_2', cnn.layer2[2])
+  model[6].add_module('layer2_3', cnn.layer2[3])
 
   # layer 3 (0)
   model.add_module('layer3', nn.Sequential(cnn.layer3[0]))
@@ -88,30 +92,30 @@ def resnet_model_and_losses(cnn, style_img, content_img, device):
   # layer 3 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
   style_loss = StyleLoss(target_feature)
-  model[6].add_module("style_loss_{}".format(i), style_loss)
+  model[7].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
 
   # layer 3 (1 - 3)
-  model[6].add_module('layer3_1', cnn.layer3[1])
-  model[6].add_module('layer3_2', cnn.layer3[2])
-  model[6].add_module('layer3_3', cnn.layer3[3])
+  model[7].add_module('layer3_1', cnn.layer3[1])
+  model[7].add_module('layer3_2', cnn.layer3[2])
+  model[7].add_module('layer3_3', cnn.layer3[3])
 
   # layer 3 - style (between 3 and 4)
   target_feature = model(style_img).detach()
   style_loss = StyleLoss(target_feature)
-  model[6].add_module("style_loss_{}".format(i), style_loss)
+  model[7].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
 
   # layer 3 (4 - 5)
-  model[6].add_module('layer3_4', cnn.layer3[4])
-  model[6].add_module('layer3_5', cnn.layer3[5])
+  model[7].add_module('layer3_4', cnn.layer3[4])
+  model[7].add_module('layer3_5', cnn.layer3[5])
 
   # layer 3 - content (end of everything)
   target = model(content_img).detach()
   content_loss = ContentLoss(target)
-  model[6].add_module("content_loss", content_loss)
+  model[7].add_module("content_loss", content_loss)
   content_losses.append(content_loss)
 
   # layer 4 (0)
@@ -120,7 +124,7 @@ def resnet_model_and_losses(cnn, style_img, content_img, device):
   # layer 4 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
   style_loss = StyleLoss(target_feature)
-  model[7].add_module("style_loss_{}".format(i), style_loss)
+  model[8].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
 

@@ -83,7 +83,7 @@ def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, 
   if model_name == 'resnet34':
     print('Building ResNet34 model!')
     model, style_losses, content_losses = resnet_model_and_losses(
-        cnn, style_img, content_img, device)
+        cnn, normalization_mean, normalization_std, style_img, content_img, device)
   else:
     print('Building VGG19 model!')
     model, style_losses, content_losses = get_style_model_and_losses(
