@@ -5,6 +5,7 @@ from PIL import Image
 
 import copy
 import matplotlib.pyplot as plt
+import numpy as np
 import sys
 import torch
 import torchvision.models as models
@@ -92,6 +93,9 @@ def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, 
   lowest_loss = 1e12
   optimizer = get_input_optimizer(input_img)
   print('Optimizing..')
+  style_scores = []
+  content_scores = []
+  total_scores = []
   run = [0]
   while run[0] <= num_steps:
     def closure():
@@ -114,20 +118,37 @@ def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, 
         print('Style Loss : {:4f} Content Loss: {:4f}'.format(
             style_score.item(), content_score.item()))
         print()
+      style_scores.append(style_score.item())
+      content_scores.append(content_score.item())
+      total_scores.append((style_score + content_score).item())
       return style_score + content_score
     loss = optimizer.step(closure).item()
     if loss < lowest_loss:
       lowest_loss = loss
       best_img = input_img.clone()
   best_img.data.clamp_(0, 1)
-  return best_img
+  return best_img, lowest_loss, style_scores, content_scores, total_scores
 
 
-output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
-                            content_img, style_img, input_img, num_epochs, style_weight, content_weight, content_layers, style_layers)
+output, lowest_loss, style_scores, content_scores, total_scores = run_style_transfer(
+    cnn, cnn_normalization_mean, cnn_normalization_std, content_img, style_img, input_img, num_epochs, style_weight, content_weight, content_layers, style_layers)
+
+# print lowest total loss
+print('LOWEST TOTAL LOSS: ', lowest_loss)
+
+# print style-transferred image
 plt.figure()
 imshow(output, title=output_title)
 plt.ioff()
+file_output = './images/output/' + os.path.splitext(os.path.basename(content_path))[
+    0] + '+' + os.path.splitext(os.path.basename(style_path))[0] + output_title + '.png'
+plt.savefig(file_output)
 plt.show()
-plt.savefig(fname='./images/output/' + os.path.splitext(os.path.basename(content_path))
-            [0] + '+' + os.path.splitext(os.path.basename(style_path))[0] + output_title + '.png')
+
+title = config_data['loss_plot']['title']
+y_title = 'Loss'
+x_title = 'Epochs'
+y_data = np.matrix([style_scores, content_scores, total_scores])
+legend = ['Style Loss', 'Content Loss', 'Total Loss']
+
+plot_stats(title, y_title, x_title, y_data, legend=legend)

@@ -43,13 +43,12 @@ class Normalization(nn.Module):
 
 
 def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device):
+  # ideal: lr = 0.75, style_weight = 1000000000
+  # refer to resnet_architecture.txt for ResNet34 architecture
   cnn = copy.deepcopy(cnn)
   content_losses = []
   style_losses = []
   i = 1
-
-  # refer to resnet_architecture.txt for ResNet34 architecture
-  # ideal: lr = 0.75, style_weight = 1000000000
 
   normalization = Normalization(
       normalization_mean, normalization_std).to(device)
