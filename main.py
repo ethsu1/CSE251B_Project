@@ -138,11 +138,15 @@ print('LOWEST TOTAL LOSS: ', lowest_loss)
 
 # print style-transferred image
 plt.figure()
-imshow(output, title=output_title)
+# no title for easier formatting
+imshow(output)
 plt.ioff()
 file_output = './images/output/' + os.path.splitext(os.path.basename(content_path))[
     0] + '+' + os.path.splitext(os.path.basename(style_path))[0] + output_title + '.png'
-plt.savefig(file_output)
+# removing axis
+plt.axis('off')
+# saving figure
+plt.savefig(file_output, bbox_inches='tight', pad_inches=0)
 plt.show()
 
 title = config_data['loss_plot']['title']
@@ -151,4 +155,5 @@ x_title = 'Epochs'
 y_data = np.matrix([style_scores, content_scores, total_scores])
 legend = ['Style Loss', 'Content Loss', 'Total Loss']
 
-plot_stats(title, y_title, x_title, y_data, legend=legend)
+if config_data['loss_plot']['plot_graph'] == True:
+  plot_stats(title, y_title, x_title, y_data, legend=legend)
