@@ -6,10 +6,10 @@
   },
   "experiment": {
     "random_noise": true,
-    "model_name": "vgg19",
-    "output_title": "vgg19_content",
+    "model_name": "densenet121",
+    "output_title": "densenet121",
     "content_layers": ["conv4_2"],
-    "style_layers": ["conv1_1", "conv2_1", "conv3_1", "conv4_1", "conv5_1"],
+    "style_layers": ["transiton1", "transition2", "transition3"],
     "learning_rate": 0.99,
     "num_epochs": 300,
     "content_weight": 1,
@@ -17,6 +17,6 @@
   },
   "loss_plot": {
     "plot_graph": false,
-    "title": "00002+00002 ResNet34 NST"
+    "title": "00002+00004 DenseNet121 NST"
   }
 }

@@ -58,6 +58,8 @@ imshow(content_img, title='Content Image')
 # load frozen pretrained model (depending on config)
 if model_name == 'resnet34':
   cnn = models.resnet34(pretrained=True).to(device).eval()
+elif model_name == "densenet121":
+  cnn = models.densenet121(pretrained=True).to(device).eval()
 else:
   # default
   cnn = models.vgg19(pretrained=True).features.to(device).eval()
@@ -84,6 +86,10 @@ def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, 
   if model_name == 'resnet34':
     print('Building ResNet34 model!')
     model, style_losses, content_losses = resnet_model_and_losses(
+        cnn, normalization_mean, normalization_std, style_img, content_img, device)
+  elif model_name == 'densenet121':
+    print('Building DenseNet121 model!')
+    model, style_losses, content_losses = densenet_model_and_losses(
         cnn, normalization_mean, normalization_std, style_img, content_img, device)
   else:
     print('Building VGG19 model!')
@@ -141,7 +147,10 @@ plt.figure()
 # no title for easier formatting
 imshow(output)
 plt.ioff()
-file_output = './images/output/' + os.path.splitext(os.path.basename(content_path))[
+path = './images/output/' + model_name + '/'
+if os.path.isdir(path) == False:
+    os.mkdir(path)
+file_output = path + os.path.splitext(os.path.basename(content_path))[
     0] + '+' + os.path.splitext(os.path.basename(style_path))[0] + output_title + '.png'
 # removing axis
 plt.axis('off')
@@ -151,7 +160,7 @@ plt.show()
 
 title = config_data['loss_plot']['title']
 y_title = 'Loss'
-x_title = 'Epochs'
+x_title = 'Number of steps'
 y_data = np.matrix([style_scores, content_scores, total_scores])
 legend = ['Style Loss', 'Content Loss', 'Total Loss']
 

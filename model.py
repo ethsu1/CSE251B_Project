@@ -129,6 +129,78 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
 
   return model, style_losses, content_losses
 
+def densenet_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device):
+  # refer to desnenet_architecture.txt for DenseNet121 architecture
+  #taking style losses for the convolutional layers between denseblocks 
+  cnn = copy.deepcopy(cnn)
+  content_losses = []
+  style_losses = []
+  i = 1
+
+  normalization = Normalization(
+      normalization_mean, normalization_std).to(device)
+
+  model = nn.Sequential(normalization, cnn.features.conv0, cnn.features.norm0, cnn.features.relu0, cnn.features.pool0)
+  
+  # denseblock 1
+  model.add_module('denseblock1', cnn.features.denseblock1)
+ 
+  model.add_module('transition1',  nn.Sequential())
+  model[6].add_module('norm',  cnn.features.transition1.relu)
+  model[6].add_module('relu',  torch.nn.ReLU(inplace=False))
+  # layer 1 - style (in between denseblock1 and denseblock2)
+  model[6].add_module('conv', cnn.features.transition1.conv)
+  target_feature = model(style_img).detach()
+  style_loss = StyleLoss(target_feature)
+  model[6].add_module("style_loss_{}".format(i), style_loss)
+  style_losses.append(style_loss)
+  target = model(content_img).detach()
+  content_loss = ContentLoss(target)
+  model[6].add_module("content_loss_{}".format(i), content_loss)
+  content_losses.append(content_loss)
+  i += 1
+  model[6].add_module('pool',  cnn.features.transition1.pool)
+
+  #denseblock2
+  model.add_module('denseblock2', cnn.features.denseblock2)
+
+  model.add_module('transition2', nn.Sequential())
+  model[8].add_module('norm',  nn.Sequential(cnn.features.transition2.norm))
+  model[8].add_module('relu',  torch.nn.ReLU(inplace=False))
+
+  # layer 2 - style (in between denseblock2 and denseblock3)
+  model[8].add_module('conv', cnn.features.transition2.conv)
+  target_feature = model(style_img).detach()
+  style_loss = StyleLoss(target_feature)
+  model[8].add_module("style_loss_{}".format(i), style_loss)
+  style_losses.append(style_loss)
+  target = model(content_img).detach()
+  content_loss = ContentLoss(target)
+  model[8].add_module("content_loss_{}".format(i), content_loss)
+  content_losses.append(content_loss)
+  i += 1
+  model[8].add_module('pool',  cnn.features.transition2.pool)
+  
+  #denseblock3
+  model.add_module('denseblock3', cnn.features.denseblock3)
+
+
+  model.add_module('transition3', nn.Sequential())
+  model[10].add_module('norm',  cnn.features.transition3.norm)
+  model[10].add_module('relu', torch.nn.ReLU(inplace=False))
+   
+  #layer 3 - style (in between denseblock3 and denseblock4)
+  model[10].add_module('conv', cnn.features.transition3.conv)
+  target_feature = model(style_img).detach()
+  style_loss = StyleLoss(target_feature)
+  model[10].add_module("style_loss_{}".format(i), style_loss)
+  style_losses.append(style_loss)
+  target = model(content_img).detach()
+  content_loss = ContentLoss(target)
+  model[10].add_module("content_loss_{}".format(i), content_loss)
+  content_losses.append(content_loss)
+  i += 1
+  return model, style_losses, content_losses
 
 # layers used by Gatys et al.
 '''content_layers_default = ['conv4_2']
