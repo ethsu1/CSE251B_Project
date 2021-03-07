@@ -88,6 +88,12 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
   # layer 3 (0)
   model.add_module('layer3', nn.Sequential(cnn.layer3[0]))
 
+  # layer 3 - content (in between 0 and 1)
+  target = model(content_img).detach()
+  content_loss = ContentLoss(target)
+  model[7].add_module("content_loss", content_loss)
+  content_losses.append(content_loss)
+
   # layer 3 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
   style_loss = StyleLoss(target_feature)
@@ -110,12 +116,6 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
   # layer 3 (4 - 5)
   model[7].add_module('layer3_4', cnn.layer3[4])
   model[7].add_module('layer3_5', cnn.layer3[5])
-
-  # layer 3 - content (end of everything)
-  target = model(content_img).detach()
-  content_loss = ContentLoss(target)
-  model[7].add_module("content_loss", content_loss)
-  content_losses.append(content_loss)
 
   # layer 4 (0)
   model.add_module('layer4', nn.Sequential(cnn.layer4[0]))
