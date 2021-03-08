@@ -1,7 +1,7 @@
 {
   "dataset": {
     "content_image_path": "./images/content/00002.jpg",
-    "style_image_path": "./images/style/00004.png",
+    "style_image_path": "./images/style/00002.png",
     "img_size": 1024
   },
   "experiment": {
