@@ -73,7 +73,7 @@ if random_noise == False:
   input_img = content_img.clone()
 # random noise
 else:
-  input_img = torch.randn(content_img.data.size(), device=device)
+  input_img = (torch.randn(content_img.data.size(), device=device) + 0.5) / 8  # shifted to avoid clamping
 
 
 def get_input_optimizer(input_img):
