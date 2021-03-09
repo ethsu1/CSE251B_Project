@@ -55,5 +55,5 @@ arguments:
 
 ```
 
-Note that (there's ~35k images in the training set) it takes 6 minutes to go through a single training epoch, so adjust `--epochs` accordingly.
+Note that, partly because the dataset contains ~35k images, it takes 6 minutes to go through a single training epoch (on a single 1080Ti), so adjust `--epochs` accordingly.
 The model with lowest validation loss will be saved to the `extra/` directory unless a specific one is specified with `--save-dir`.
