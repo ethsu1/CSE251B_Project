@@ -6,17 +6,19 @@
   },
   "experiment": {
     "random_noise": false,
-    "model_name": "resnet34",
-    "output_title": "resnet34",
+    "model_name": "vgg",
+    "output_title": "vgg19_l2_style1000000_lbfgs",
     "content_layers": ["conv4_2"],
-    "style_layers": ["transiton1", "transition2", "transition3"],
-    "learning_rate": 0.75,
-    "num_epochs": 300,
+    "style_layers": ["conv1_1", "conv2_1", "conv3_1", "conv4_1", "conv5_1"],
+    "learning_rate": 0.7,
+    "num_epochs": 1000,
     "content_weight": 1,
-    "style_weight": 1000000000
+    "style_weight": 1000000,
+    "loss": "l2",
+    "optimizer": "lbfgs"
   },
   "loss_plot": {
-    "plot_graph": false,
-    "title": "00002+00004 DenseNet121 NST"
+    "plot_graph": true,
+    "title": "00002+00002 VGG19 NST LBFGS Optimizer"
   }
 }

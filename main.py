@@ -38,6 +38,8 @@ random_noise = config_data['experiment']['random_noise']
 style_path = config_data['dataset']['style_image_path']
 style_weight = config_data['experiment']['style_weight']
 style_layers = config_data['experiment']['style_layers']
+loss_type = config_data['experiment']['loss']
+optim_type = config_data['experiment']['optimizer']
 
 # get image
 content_img = img_loader(content_path, img_size, device)
@@ -76,8 +78,13 @@ else:
   input_img = (torch.randn(content_img.data.size(), device=device) + 0.5) / 8  # shifted to avoid clamping
 
 
-def get_input_optimizer(input_img):
-  optimizer = optim.LBFGS([input_img.requires_grad_()], lr=lr)
+def get_input_optimizer(input_img, optim_type):
+  if optim_type == 'adam':
+    optimizer = optim.Adam([input_img.requires_grad_()], lr=lr)
+  elif optim_type == 'rmsprop':
+    optimizer = optim.RMSprop([input_img.requires_grad_()], lr=lr)
+  else:
+    optimizer = optim.LBFGS([input_img.requires_grad_()], lr=lr)
   return optimizer
 
 
@@ -86,18 +93,18 @@ def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, 
   if model_name == 'resnet34':
     print('Building ResNet34 model!')
     model, style_losses, content_losses = resnet_model_and_losses(
-        cnn, normalization_mean, normalization_std, style_img, content_img, device)
+        cnn, normalization_mean, normalization_std, style_img, content_img, device, loss_type)
   elif model_name == 'densenet121':
     print('Building DenseNet121 model!')
     model, style_losses, content_losses = densenet_model_and_losses(
-        cnn, normalization_mean, normalization_std, style_img, content_img, device)
+        cnn, normalization_mean, normalization_std, style_img, content_img, device, loss_type)
   else:
     print('Building VGG19 model!')
     model, style_losses, content_losses = get_style_model_and_losses(
-        cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers)
+        cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers, loss_type)
   best_img = input_img
   lowest_loss = 1e12
-  optimizer = get_input_optimizer(input_img)
+  optimizer = get_input_optimizer(input_img, optim_type)
   print('Optimizing..')
   style_scores = []
   content_scores = []

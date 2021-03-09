@@ -5,12 +5,18 @@ import torch.nn.functional as F
 
 
 class ContentLoss(nn.Module):
-  def __init__(self, target,):
+  def __init__(self, target, loss_type):
     super(ContentLoss, self).__init__()
     self.target = target.detach()
+    self.loss_type = loss_type
 
   def forward(self, input):
-    self.loss = F.mse_loss(input, self.target)
+    if self.loss_type == 'l1':
+      self.loss = F.l1_loss(input, self.target)
+    elif self.loss_type == 'huber':
+      self.loss = F.smooth_l1_loss(input, self.target)
+    else:
+      self.loss = F.mse_loss(input, self.target)
     return input
 
 
@@ -22,13 +28,19 @@ def gram_matrix(input):
 
 
 class StyleLoss(nn.Module):
-  def __init__(self, target_feature):
+  def __init__(self, target_feature, loss_type):
     super(StyleLoss, self).__init__()
     self.target = gram_matrix(target_feature).detach()
+    self.loss_type = loss_type
 
   def forward(self, input):
     G = gram_matrix(input)
-    self.loss = F.mse_loss(G, self.target)
+    if self.loss_type == 'l1':
+      self.loss = F.l1_loss(G, self.target)
+    elif self.loss_type == 'huber':
+      self.loss = F.smooth_l1_loss(G, self.target)
+    else:
+      self.loss = F.mse_loss(G, self.target)
     return input
 
 
@@ -42,7 +54,7 @@ class Normalization(nn.Module):
     return (img - self.mean) / self.std
 
 
-def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device):
+def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device, loss_type):
   # ideal: lr = 0.75, style_weight = 1000000000
   # refer to resnet_architecture.txt for ResNet34 architecture
   cnn = copy.deepcopy(cnn)
@@ -61,7 +73,7 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
 
   # layer 1 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[5].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
@@ -75,7 +87,7 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
 
   # layer 2 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[6].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
@@ -89,7 +101,7 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
 
   # layer 2 - content (after 3)
   target = model(content_img).detach()
-  content_loss = ContentLoss(target)
+  content_loss = ContentLoss(target, loss_type)
   model[6].add_module("content_loss", content_loss)
   content_losses.append(content_loss)
 
@@ -98,7 +110,7 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
 
   # layer 3 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[7].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
@@ -110,7 +122,7 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
 
   # layer 3 - style (between 3 and 4)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[7].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
@@ -124,7 +136,7 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
 
   # layer 4 - style (in between 0 and 1)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[8].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   i += 1
@@ -132,7 +144,7 @@ def resnet_model_and_losses(cnn, normalization_mean, normalization_std, style_im
   return model, style_losses, content_losses
 
 
-def densenet_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device):
+def densenet_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device, loss_type):
   # refer to desnenet_architecture.txt for DenseNet121 architecture
   # taking style losses for the convolutional layers between denseblocks
   cnn = copy.deepcopy(cnn)
@@ -155,11 +167,11 @@ def densenet_model_and_losses(cnn, normalization_mean, normalization_std, style_
   # layer 1 - style (in between denseblock1 and denseblock2)
   model[6].add_module('conv', cnn.features.transition1.conv)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[6].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   target = model(content_img).detach()
-  content_loss = ContentLoss(target)
+  content_loss = ContentLoss(target, loss_type)
   model[6].add_module("content_loss_{}".format(i), content_loss)
   content_losses.append(content_loss)
   i += 1
@@ -175,11 +187,11 @@ def densenet_model_and_losses(cnn, normalization_mean, normalization_std, style_
   # layer 2 - style (in between denseblock2 and denseblock3)
   model[8].add_module('conv', cnn.features.transition2.conv)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[8].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   target = model(content_img).detach()
-  content_loss = ContentLoss(target)
+  content_loss = ContentLoss(target, loss_type)
   model[8].add_module("content_loss_{}".format(i), content_loss)
   content_losses.append(content_loss)
   i += 1
@@ -195,11 +207,11 @@ def densenet_model_and_losses(cnn, normalization_mean, normalization_std, style_
   # layer 3 - style (in between denseblock3 and denseblock4)
   model[10].add_module('conv', cnn.features.transition3.conv)
   target_feature = model(style_img).detach()
-  style_loss = StyleLoss(target_feature)
+  style_loss = StyleLoss(target_feature, loss_type)
   model[10].add_module("style_loss_{}".format(i), style_loss)
   style_losses.append(style_loss)
   target = model(content_img).detach()
-  content_loss = ContentLoss(target)
+  content_loss = ContentLoss(target, loss_type)
   model[10].add_module("content_loss_{}".format(i), content_loss)
   content_losses.append(content_loss)
   i += 1
@@ -211,7 +223,7 @@ def densenet_model_and_losses(cnn, normalization_mean, normalization_std, style_
 style_layers_default = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']'''
 
 
-def get_style_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers):
+def get_style_model_and_losses(cnn, normalization_mean, normalization_std, style_img, content_img, device, content_layers, style_layers, loss_type):
   # for VGG19: lr = 0.99, style_weight = 1000000
   # RENAMING LAYERS
   cnn = copy.deepcopy(cnn)
@@ -243,12 +255,12 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std, style
     # GETTING LOSSES
     if name in content_layers:
       target = model(content_img).detach()
-      content_loss = ContentLoss(target)
+      content_loss = ContentLoss(target, loss_type)
       model.add_module("content_loss{}_{}".format(block, i), content_loss)
       content_losses.append(content_loss)
     if name in style_layers:
       target_feature = model(style_img).detach()
-      style_loss = StyleLoss(target_feature)
+      style_loss = StyleLoss(target_feature, loss_type)
       model.add_module("style_loss{}_{}".format(block, i), style_loss)
       style_losses.append(style_loss)
   for i in range(len(model) - 1, -1, -1):
