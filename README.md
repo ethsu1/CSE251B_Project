@@ -21,7 +21,7 @@ Real-world images come from the [ADE20K](https://groups.csail.mit.edu/vision/dat
 scripts/download_ade20k.sh
 ```
 
-This will create a new directory `real_data` download and unzip the dataset move all training images into `real_data`, and then delete everything else that was downloaded (annotations, etc.). Dataset is made up of jpg files. Final size is ~800Mb.
+This will create a new directory `real_data`, download and unzip the dataset, move all training images into `real_data`, and then delete everything else that was downloaded (annotations, etc.). Dataset is made up of jpg files. Final size is ~800Mb.
 
 ### Index Files for Torch Dataloader
 
