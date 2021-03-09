@@ -129,7 +129,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
         loss.backward()
         optimizer.step()
         if iteration % 50 == 0:
-            print('Batch {} finished. Time Elapsed Since Epoch Started: {}'.format(iteration, time.time() - ts))
+            print('Batch {} finished. Time Elapsed Since Epoch Started: {:.4f}'.format(iteration, time.time() - ts))
+            print('Batch Loss: {:.4f}. Batch Accuracy: {:.4f}.'.format(loss.item(), get_acc(predict(outputs), labels)))
 
 
     print("\nFinished Epoch {}\nTime Elapsed (Total): {:.4f}\nTraining Loss: {:.4f}\n".format(epoch, time.time() - ts, cost.item()/len(train_loader)))

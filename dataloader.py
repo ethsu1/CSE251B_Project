@@ -31,6 +31,8 @@ class ImageDataset(Dataset):
         with open(real_index, 'r') as f:
             real_fn = f.read().split('\n')[:-1]
         if data_mode == 'train':
+            print('Using {} Anime Images.\nUsing {} Real Images.'.format(len(anime_fn), len(real_fn)))
+        if data_mode == 'train':
             anime_fn = anime_fn[0:int(len(anime_fn)*0.9)]
             real_fn = real_fn[0:int(len(real_fn)*0.9)]
         else:
