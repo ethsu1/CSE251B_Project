@@ -23,6 +23,13 @@ scripts/download_ade20k.sh
 
 This will create a new directory `real_data`, download and unzip the dataset, move all training images into `real_data`, and then delete everything else that was downloaded (annotations, etc.). Dataset is made up of jpg files. Final size is ~800Mb.
 
+We also set aside the first 1000 real data samples into a separate directory to perform testing of our style transfer methods. From your local repository directory, run:
+```
+scripts/create_real_content_set.sh
+```
+
+This creates a new directory `content_samples` and moves the first 1000 ADE20K samples to it.
+
 ### Index Files for Torch Dataloader
 
 Make sure the previous two steps have been completed. To create an index txt file for each dataset for use in the PyTorch dataloader, run from your local repository:
