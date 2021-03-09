@@ -64,3 +64,39 @@ arguments:
 
 Note that, partly because the dataset contains ~35k images, it takes 6 minutes to go through a single training epoch (on a single 1080Ti), so adjust `--epochs` accordingly.
 The model with lowest validation loss will be saved to the `extra/` directory unless a specific one is specified with `--save-dir`.
+
+## Running Experiments
+Different experiments can be run by changing `default.json`.
+
+`random_noise`: input image to optimize
+  - `True`: use random noise
+  - `False`: use copy of content image
+
+`model_name`: pretrained model on ImageNet
+  - `resnet34`
+  - `densenet121`
+  - `vgg` (default)
+
+`output_title`: filename of output NST image
+
+`content_layers`: layer used to represent content (vgg only)
+
+`style_layers`: layers used to represent style (vgg only)
+
+`learning_rate`: learning rate used by optimizer
+
+`num_epochs`: number of iterations to run
+
+`content_weight`: how important content loss is (beta)
+
+`style_weight`: how important style loss is (alpha)
+
+`loss`: loss function
+  - `l1`
+  - `huber`
+  - `l2` (default)
+
+`optimizer`: optimization algorithm
+  - `adam` 
+  - `rmsprop`
+  - `lbfgs` (default)
