@@ -36,8 +36,6 @@ parser.add_argument('--save-dir', default='extra/', type=str, metavar='PATH',
 parser.add_argument('--img-size', default=256, type=int,
                     metavar='N', help='dimension to resize images to (square, default: 256)')
 
-
-
 def main():
     global args
     args = parser.parse_args()

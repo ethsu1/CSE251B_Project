@@ -15,18 +15,24 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-# assigning device based on GPU/CUDA availability
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# load config
 config_name = 'default'
-if len(sys.argv) > 1:
-    config_name = sys.argv[1]
 config_data = read_file_in_dir('./', config_name + '.json')
 if config_data is None:
     raise Exception("Configuration file doesn't exist: ", config_name)
+content_file = None
+content_info = None
+if len(sys.argv) > 1:
+    content_name = sys.argv[1]
+    content_file = open('./' + content_name + '.txt', 'r')
+else:
+    content_name = 'content_prog'
+if content_file is not None:
+    content_info = content_file.readlines()
+    content_info = map(lambda s: s.strip(), content_info)
+    content_info = set(content_info)
 
-# load config vars
 content_dir_path = config_data['test_dataset']['content_dir_path']
 content_layers = config_data['experiment']['content_layers']
 content_weight = config_data['experiment']['content_weight']
@@ -43,12 +49,17 @@ style_layers = config_data['experiment']['style_layers']
 style_weight = config_data['experiment']['style_weight']
 
 for content_file_name in os.listdir(content_dir_path):
+    if content_info is not None and content_file_name in content_info:
+        print('Skipping: ', content_file_name)
+        continue
     for style_file_name in os.listdir(style_dir_path):
         content_path = os.path.join(content_dir_path, content_file_name)
         style_path = os.path.join(style_dir_path, style_file_name)
 
-        print('\tContent Path: ', content_path)
-        print('\tStyle Path: ', style_path)
+        print('\tContent Path:\t', content_path)
+        print('\tStyle Path:\t', style_path)
+        print('\tOutput Path:\t', output_dir_path + model_name + '_' + loss_type + '_' + optim_type + '/' +
+              os.path.splitext(os.path.basename(content_path))[0] + '_' + os.path.splitext(os.path.basename(style_path))[0] + '.png')
 
         content_img = img_loader(content_path, img_size, device)
         style_img = img_loader(style_path, img_size, device)
@@ -69,7 +80,8 @@ for content_file_name in os.listdir(content_dir_path):
         if random_noise == False:
             input_img = content_img.clone()
         else:
-            input_img = (torch.randn(content_img.data.size(), device=device) + 0.5) / 8
+            input_img = (torch.randn(
+                content_img.data.size(), device=device) + 0.5) / 8
 
         def get_input_optimizer(input_img, optim_type):
             if optim_type == 'adam':
@@ -121,7 +133,8 @@ for content_file_name in os.listdir(content_dir_path):
             best_img.data.clamp_(0, 1)
             return best_img
 
-        output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std, content_img, style_img, input_img, num_epochs, style_weight, content_weight, content_layers, style_layers)
+        output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std, content_img,
+                                    style_img, input_img, num_epochs, style_weight, content_weight, content_layers, style_layers)
 
         plt.figure()
         plt.ioff()
@@ -136,5 +149,9 @@ for content_file_name in os.listdir(content_dir_path):
             0] + '_' + os.path.splitext(os.path.basename(style_path))[0] + '.png'
         plt.axis('off')
         plt.savefig(file_output, bbox_inches='tight', pad_inches=0)
+
+    content_file = './' + content_name + '.txt'
+    with open(content_file, 'a') as file:
+        file.write(content_file_name + '\n')
 
 print('Done! Check the specified directory for your style-transferred images.')

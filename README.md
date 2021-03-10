@@ -114,6 +114,11 @@ python create_test_nst.py
 ```
 Within `output_dir_path`, a new subdirectory will be created having the name "`model_name`_ `loss`_`optimizer`". The style-transferred file names will be the concatenation of the content file name and the style file name.
 
+In the event that the file crashes, it will record your progress such that you can start from where you left off. A file called `content_prog.txt` will be created that keeps track of the progress you have made via the name of the content files. You can specify to use this file by running:
+```
+python create_test_nst.py content_prog
+```
+
 The following configuration variables are important for generating style-transferred images:
 
 `content_dir_path`: path of directory containing all the content images
