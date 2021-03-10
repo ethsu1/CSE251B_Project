@@ -4,21 +4,26 @@
     "style_image_path": "./images/style/00002.png",
     "img_size": 1024
   },
+  "test_dataset": {
+    "content_dir_path": "./content_samples/",
+    "style_dir_path": "./style_samples/",
+    "output_dir_path": "./test_data/"
+  },
   "experiment": {
     "random_noise": false,
-    "model_name": "vgg",
-    "output_title": "vgg19_l2_style1000000_lbfgs",
+    "model_name": "resnet34",
+    "output_title": "resnet34_temp",
     "content_layers": ["conv4_2"],
     "style_layers": ["conv1_1", "conv2_1", "conv3_1", "conv4_1", "conv5_1"],
-    "learning_rate": 0.7,
-    "num_epochs": 1000,
+    "learning_rate": 0.75,
+    "num_epochs": 300,
     "content_weight": 1,
-    "style_weight": 1000000,
+    "style_weight": 1000000000,
     "loss": "l2",
     "optimizer": "lbfgs"
   },
   "loss_plot": {
-    "plot_graph": true,
+    "plot_graph": false,
     "title": "00002+00002 VGG19 NST LBFGS Optimizer"
   }
 }

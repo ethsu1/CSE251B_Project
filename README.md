@@ -63,10 +63,16 @@ arguments:
 ```
 
 Note that, partly because the dataset contains ~35k images, it takes 6 minutes to go through a single training epoch (on a single 1080Ti), so adjust `--epochs` accordingly.
+
 The model with lowest validation loss will be saved to the `extra/` directory unless a specific one is specified with `--save-dir`.
 
-## Running Experiments
-Different experiments can be run by changing `default.json`.
+## Running Individual Experiments
+Different experiments can be run by changing `default.json` and then run:
+```
+python main.py
+```
+
+The following configuration variables are important for running individual experiments:
 
 `random_noise`: input image to optimize
   - `True`: use random noise
@@ -78,6 +84,48 @@ Different experiments can be run by changing `default.json`.
   - `vgg` (default)
 
 `output_title`: filename of output NST image
+
+`content_layers`: layer used to represent content (vgg only)
+
+`style_layers`: layers used to represent style (vgg only)
+
+`learning_rate`: learning rate used by optimizer
+
+`num_epochs`: number of iterations to run
+
+`content_weight`: how important content loss is (beta)
+
+`style_weight`: how important style loss is (alpha)
+
+`loss`: loss function
+  - `l1`
+  - `huber`
+  - `l2` (default)
+
+`optimizer`: optimization algorithm
+  - `adam` 
+  - `rmsprop`
+  - `lbfgs` (default)
+
+## Generating Style-transferred Images (for Test Data)
+A large quantity of style-transferred images can be created by changing `default.json` and then run:
+```
+python create_test_nst.py
+```
+Within `output_dir_path`, a new subdirectory will be created having the name "`model_name`_ `loss`_`optimizer`". The style-transferred file names will be the concatenation of the content file name and the style file name.
+
+The following configuration variables are important for generating style-transferred images:
+
+`content_dir_path`: path of directory containing all the content images
+
+`style_dir_path`: path of directory containing all the style images
+
+`output_dir_path`: path of directory for output images
+
+`model_name`: pre-trained model on ImageNet
+  - `resnet34`
+  - `densenet121`
+  - `vgg` (default)
 
 `content_layers`: layer used to represent content (vgg only)
 
