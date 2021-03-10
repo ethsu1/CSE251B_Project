@@ -35,6 +35,8 @@ parser.add_argument('--save-dir', default='extra/', type=str, metavar='PATH',
                     help='path to directory for saved outputs (default: extra/)')
 parser.add_argument('--img-size', default=256, type=int,
                     metavar='N', help='dimension to resize images to (square, default: 256)')
+parser.add_argument('--no-color', dest='no_color', action='store_true',
+                    help='make all evaluation images monochrome')
 
 def main():
     global args
@@ -44,6 +46,8 @@ def main():
     print('\n\n\n\n\n\n\n')
     print('Using {} Workers to Load Data\nBatch Size: {}\nLearning Rate: {}\n'
           'Saving Output to {}'.format(args.workers, args.batch_size, args.lr, args.save_dir))
+    if args.no_color:
+        print('Using Grayscale Images')
 
     # Check if Output Directory Exists
     if not os.path.isdir(args.save_dir):
@@ -54,8 +58,8 @@ def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(args.gpu)
 
     # Load Datasets
-    train_dataset = ImageDataset(mode='train', img_size=args.img_size)
-    val_dataset = ImageDataset(mode='val', img_size=args.img_size)
+    train_dataset = ImageDataset(mode='train', img_size=args.img_size, grayscale=args.no_color)
+    val_dataset = ImageDataset(mode='val', img_size=args.img_size, grayscale=args.no_color)
 
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, num_workers=args.workers, shuffle=True)

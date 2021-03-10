@@ -10,15 +10,17 @@ REAL_INDEX_FN = 'real_data/real_data_index.txt'
 IMAGE_DEFAULT_SIZE = 256
 
 class ImageDataset(Dataset):
-    def __init__(self, mode='train', img_size=IMAGE_DEFAULT_SIZE, anime_index=ANIME_INDEX_FN, real_index=REAL_INDEX_FN):
+    def __init__(self, mode='train', img_size=IMAGE_DEFAULT_SIZE, anime_index=ANIME_INDEX_FN, real_index=REAL_INDEX_FN,
+                 grayscale=False):
         """
 
         Args:
         """
         self.data, self.idx = self._read_index_files(mode, anime_index, real_index)
         self.img_size = img_size
+        self.grayscale = grayscale
 
-
+        self.color_transforms = transforms.Compose([transforms.Grayscale(num_output_channels=3)])
         self.normalize = transforms.Compose([transforms.ToTensor(),
                                              transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         self.resize = transforms.Compose([transforms.Resize(img_size, interpolation=2),
@@ -52,6 +54,8 @@ class ImageDataset(Dataset):
         label = self.idx[item]
 
         image = Image.open(fn).convert('RGB')
+        if self.grayscale:
+            image = self.color_transforms(image)
         image = self.resize(image)
         image = self.normalize(image)
 
