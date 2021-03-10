@@ -4,6 +4,8 @@ import torchvision.transforms.functional as TF
 import numpy as np
 from PIL import Image
 import torch
+import glob
+import os
 
 ANIME_INDEX_FN = 'anime_data/anime_data_index.txt'
 REAL_INDEX_FN = 'real_data/real_data_index.txt'
@@ -61,3 +63,35 @@ class ImageDataset(Dataset):
 
         return image, label
 
+class EvalDataset(Dataset):
+    def __init__(self, img_size=IMAGE_DEFAULT_SIZE, image_dir=None,
+                 grayscale=False):
+        """
+
+        Args:
+        """
+        self.image_dir = image_dir
+        assert(image_dir is not None), 'No evaluation image directory passed to Dataset'
+        self.data = glob.glob(os.path.join(image_dir, '*'))
+        self.img_size = img_size
+        self.grayscale = grayscale
+
+        self.color_transforms = transforms.Compose([transforms.Grayscale(num_output_channels=3)])
+        self.normalize = transforms.Compose([transforms.ToTensor(),
+                                             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+        self.resize = transforms.Compose([transforms.Resize(img_size, interpolation=2),
+                                          transforms.CenterCrop(img_size)])
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, item):
+        fn = self.data[item]
+
+        image = Image.open(fn).convert('RGB')
+        if self.grayscale:
+            image = self.color_transforms(image)
+        image = self.resize(image)
+        image = self.normalize(image)
+
+        return image
