@@ -98,8 +98,6 @@ def val(model, val_loader, criterion):
             output = model(inputs)
             preds = predict(output)
             loss += criterion(output, labels).detach()
-
-
             acc_val += get_acc(preds, labels)
 
     samples = samples / args.batch_size

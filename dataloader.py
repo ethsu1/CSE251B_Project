@@ -94,4 +94,4 @@ class EvalDataset(Dataset):
         image = self.resize(image)
         image = self.normalize(image)
 
-        return image
+        return image, 0
