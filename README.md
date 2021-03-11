@@ -71,10 +71,10 @@ The model with lowest validation loss will be saved to the `extra/` directory un
 
 Once the classifier is trained and the model has been saved somewhere, run:
 ```
-python evaluate_images.py --<model-path> --<image-dir>
+python evaluate_images.py --model-path <MODEL_PATH> --image-dir <IMAGE_DIR>
 ```
 
-where `image-dir` is a path to the directory containing only images to be evaluated and `model-path` is the path to the .pth.tar file saved in `train_anime_classifier.py`.
+where `<IMAGE_DIR>` is a path to the directory containing only images to be evaluated and `<MODEL_PATH>` is the path to the .pth.tar file saved in `train_anime_classifier.py`.
 
 ## Running Style Transfer Experiments on Individual Images
 Different experiments can be run by changing `default.json` and then run:
