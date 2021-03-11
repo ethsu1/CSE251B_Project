@@ -26,7 +26,9 @@ parser.add_argument('--gpu', default='0', help='index of gpus to use (for two, u
 parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N', help='mini-batch size (default: 32)')
 parser.add_argument('--image-dir', default='', type=str, metavar='PATH',
-                    help='path to directory for images to evaluate (e.g. eval_images or eval_images/')
+                    help='path to directory for images to evaluate (e.g. ./eval_images/ or /.test_data/resnet34_l2_lbfgs/)')
+parser.add_argument('--save-dir', default='', type=str, metavar='PATH',
+                    help='path for results (e.g. ./results/)')
 parser.add_argument('--img-size', default=256, type=int,
                     metavar='N', help='dimension to resize images to (square, default: 256)')
 parser.add_argument('--model-path', default='', type=str, metavar='PATH',
@@ -39,6 +41,9 @@ def main():
     args = parser.parse_args()
     out_dir = args.save_dir
 
+    if os.path.isdir(out_dir) == False:
+        os.mkdir(out_dir)
+
     print('\n\n\n\n\n\n\n')
     print('Using {} Workers to Load Data\nBatch Size: {}\n'.format(args.workers, args.batch_size))
 
@@ -46,7 +51,6 @@ def main():
 
     # Check if model exists
     assert os.path.isfile(args.model_path), 'Selected model does not exist'
-
 
     checkpoint = torch.load(args.model_path)
     fcn_model = torchvision.models.resnet18(progress=True)
@@ -71,6 +75,7 @@ def main():
     criterion = nn.CrossEntropyLoss().cuda()
 
     val_loss, val_acc = val(fcn_model, image_loader, criterion)
+
     np.save(out_dir + 'eval_loss.npy', val_loss)
     np.save(out_dir + 'eval_acc.npy', val_acc)
 
@@ -88,7 +93,6 @@ def val(model, val_loader, criterion):
     ts = time.time()
     with torch.no_grad():
         for iteration, (X, Y) in enumerate(val_loader):
-
             inputs = X.cuda()
             labels = Y.cuda()
 
@@ -110,7 +114,6 @@ def predict(network_out):
     return torch.argmax(network_out, dim=1)
 
 def get_acc(pred, lbl):
-
     return torch.sum(pred == lbl) / lbl.shape[0]
 
 

@@ -4,8 +4,11 @@ anime_data
 content_prog.txt
 content_samples
 cse251proj.tar.gz
+cse251b_proj.tar.gz
 default.json
 images
+model_best.pth.tar
 real_data
+results
 style_samples
 test_data
