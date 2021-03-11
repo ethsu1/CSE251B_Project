@@ -142,6 +142,8 @@ for content_file_name in os.listdir(content_dir_path):
         image = image.squeeze(0)
         image = unloader(image)
         plt.imshow(image)
+        if os.path.isdir(output_dir_path) == False:
+            os.mkdir(output_dir_path)
         path = output_dir_path + model_name + '_' + loss_type + '_' + optim_type + '/'
         if os.path.isdir(path) == False:
             os.mkdir(path)
