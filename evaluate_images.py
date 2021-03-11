@@ -102,7 +102,7 @@ def val(model, val_loader, criterion):
 
             output = model(inputs)
             preds = predict(output)
-            predictions[int(samples[0].item()):int(samples[0].item()) + int(cur_batch)] = preds
+            predictions[int(samples[0]):int(samples[0]) + int(cur_batch)] = preds
             loss += criterion(output, labels).detach()
             acc_val += get_acc(preds, labels)
 
