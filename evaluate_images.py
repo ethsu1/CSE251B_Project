@@ -64,7 +64,7 @@ def main():
     # Load Dataset
     image_dataset = EvalDataset(img_size=args.img_size, image_dir=args.image_dir, grayscale=args.no_color)
 
-    image_loader = DataLoader(dataset=image_dataset, batch_size=args.batch_size, num_workers=args.workers, shuffle=True)
+    image_loader = DataLoader(dataset=image_dataset, batch_size=args.batch_size, num_workers=args.workers, shuffle=False)
 
     # Data parallelism w multiple GPUs
     if len(args.gpu) > 1:
@@ -74,14 +74,15 @@ def main():
 
     criterion = nn.CrossEntropyLoss().cuda()
 
-    val_loss, val_acc = val(fcn_model, image_loader, criterion)
+    val_loss, val_acc, predictions = val(fcn_model, image_loader, criterion)
 
     np.save(out_dir + 'eval_loss.npy', val_loss)
     np.save(out_dir + 'eval_acc.npy', val_acc)
-
+    np.save(out_dir + 'predictions.npy', predictions)
 
 def val(model, val_loader, criterion):
 
+    num_images = len(val_loader.dataset)
     # Switch to Evaluation Mode
     model.eval()
 
@@ -89,6 +90,7 @@ def val(model, val_loader, criterion):
     samples = torch.zeros(1)
     loss = torch.zeros(1).cuda()
     acc_val = torch.zeros(1).cuda()
+    predictions = torch.zeros(num_images).cuda()
 
     ts = time.time()
     with torch.no_grad():
@@ -97,17 +99,19 @@ def val(model, val_loader, criterion):
             labels = Y.cuda()
 
             cur_batch = float(Y.shape[0])
-            samples += cur_batch
 
             output = model(inputs)
             preds = predict(output)
+            predictions[samples:samples+cur_batch] = preds
             loss += criterion(output, labels).detach()
             acc_val += get_acc(preds, labels)
+
+            samples += cur_batch
 
     samples = samples / args.batch_size
     print('\nTime Elapsed: {:.4f}\nVal Loss: {:.4f}\nVal Acc: {:.4f}\n'
           .format(time.time() - ts, loss.item()/samples.item(), acc_val.item()/samples.item()))
-    return (loss.item()/samples.item()), (acc_val.item()/samples.item())
+    return (loss.item()/samples.item()), (acc_val.item()/samples.item()), predictions.cpu().numpy()
 
 
 def predict(network_out):
