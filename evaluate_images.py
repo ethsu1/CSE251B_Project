@@ -74,11 +74,12 @@ def main():
 
     criterion = nn.CrossEntropyLoss().cuda()
 
-    val_loss, val_acc, predictions = val(fcn_model, image_loader, criterion)
+    val_loss, val_acc, predictions, probabilities = val(fcn_model, image_loader, criterion)
 
     np.save(out_dir + 'eval_loss.npy', val_loss)
     np.save(out_dir + 'eval_acc.npy', val_acc)
     np.save(out_dir + 'predictions.npy', predictions)
+    np.save(out_dir + 'probabilities.npy', predictions)
 
 def val(model, val_loader, criterion):
 
@@ -91,6 +92,9 @@ def val(model, val_loader, criterion):
     loss = torch.zeros(1).cuda()
     acc_val = torch.zeros(1).cuda()
     predictions = torch.zeros(num_images).cuda()
+    probabilities = torch.zeros(num_images, 2).cuda()
+
+    softmax_fn = nn.Softmax(dim=1)
 
     ts = time.time()
     with torch.no_grad():
@@ -103,6 +107,7 @@ def val(model, val_loader, criterion):
             output = model(inputs)
             preds = predict(output)
             predictions[int(samples[0]):int(samples[0]) + int(cur_batch)] = preds
+            probabilities[int(samples[0]):int(samples[0]) + int(cur_batch), :] = softmax_fn(output)
             loss += criterion(output, labels).detach()
             acc_val += get_acc(preds, labels)
 
@@ -111,7 +116,7 @@ def val(model, val_loader, criterion):
     samples = samples / args.batch_size
     print('\nTime Elapsed: {:.4f}\nVal Loss: {:.4f}\nVal Acc: {:.4f}\n'
           .format(time.time() - ts, loss.item()/samples.item(), acc_val.item()/samples.item()))
-    return (loss.item()/samples.item()), (acc_val.item()/samples.item()), predictions.cpu().numpy()
+    return (loss.item()/samples.item()), (acc_val.item()/samples.item()), predictions.cpu().numpy(), probabilities.cpu().numpy()
 
 
 def predict(network_out):
