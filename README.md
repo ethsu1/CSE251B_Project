@@ -59,6 +59,7 @@ arguments:
                         initial learning rate (default: 1e-3)
   --save-dir PATH       path to directory for saved outputs (default: extra/)
   --img-size N          dimension to resize images to (square, default: 256)
+  --no-color            make all images monochrome
 
 ```
 
@@ -66,7 +67,16 @@ Note that, partly because the dataset contains ~35k images, it takes 6 minutes t
 
 The model with lowest validation loss will be saved to the `extra/` directory unless a specific one is specified with `--save-dir`.
 
-## Running Individual Experiments
+## Performing Evaluation w/ Real/Anime Classifier
+
+Once the classifier is trained and the model has been saved somewhere, run:
+```
+python evaluate_images.py --<model-path> --<image-dir>
+```
+
+where `image-dir` is a path to the directory containing only images to be evaluated and `model-path` is the path to the .pth.tar file saved in `train_anime_classifier.py`.
+
+## Running Style Transfer Experiments on Individual Images
 Different experiments can be run by changing `default.json` and then run:
 ```
 python main.py
