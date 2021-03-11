@@ -165,7 +165,6 @@ def val(epoch, model, val_loader, criterion):
             preds = predict(output)
             loss += criterion(output, labels).detach()
 
-
             acc_val += get_acc(preds, labels)
 
     samples = samples / args.batch_size

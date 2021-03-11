@@ -151,6 +151,8 @@ for content_file_name in os.listdir(content_dir_path):
             0] + '_' + os.path.splitext(os.path.basename(style_path))[0] + '.png'
         plt.axis('off')
         plt.savefig(file_output, bbox_inches='tight', pad_inches=0)
+        plt.clf()
+        plt.close()
 
     content_file = './' + content_name + '.txt'
     with open(content_file, 'a') as file:
