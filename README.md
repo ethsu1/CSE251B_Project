@@ -99,7 +99,10 @@ The following configuration variables are important for running individual exper
 
 `style_layers`: layers used to represent style (vgg only)
 
-`learning_rate`: learning rate used by optimizer
+`learning_rate`: learning rate used by optimizer. Recommendations:
+  - 0.75 for lbfgs
+  - 0.01 for adam
+  - 0.002 for rmsprop
 
 `num_epochs`: number of iterations to run
 
@@ -146,7 +149,10 @@ The following configuration variables are important for generating style-transfe
 
 `style_layers`: layers used to represent style (vgg only)
 
-`learning_rate`: learning rate used by optimizer
+`learning_rate`: learning rate used by optimizer. Recommendations:
+  - 0.75 for lbfgs
+  - 0.01 for adam
+  - 0.002 for rmsprop
 
 `num_epochs`: number of iterations to run
 
