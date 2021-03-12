@@ -26,7 +26,7 @@ parser.add_argument('--gpu', default='0', help='index of gpus to use (for two, u
 parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N', help='mini-batch size (default: 32)')
 parser.add_argument('--image-dir', default='', type=str, metavar='PATH',
-                    help='path to directory for images to evaluate (e.g. ./eval_images/ or /.test_data/resnet34_l2_lbfgs/)')
+                    help='path to directory for images to evaluate (e.g. ./eval_images/ or ./test_data/resnet34_l2_lbfgs/)')
 parser.add_argument('--save-dir', default='', type=str, metavar='PATH',
                     help='path for results (e.g. ./results/)')
 parser.add_argument('--img-size', default=256, type=int,
@@ -109,8 +109,7 @@ def val(model, val_loader, criterion):
             predictions[int(samples[0]):int(samples[0]) + int(cur_batch)] = preds
             probabilities[int(samples[0]):int(samples[0]) + int(cur_batch), :] = softmax_fn(output)
             loss += criterion(output, labels).detach()
-            acc_val += get_acc(preds, labels)
-
+            acc_val += get_acc(preds, labels) * (cur_batch / args.batch_size)
             samples += cur_batch
 
     samples = samples / args.batch_size
