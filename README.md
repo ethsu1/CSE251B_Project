@@ -106,9 +106,9 @@ The following configuration variables are important for running individual exper
 
 `num_epochs`: number of iterations to run
 
-`content_weight`: how important content loss is (beta)
+`content_weight`: how important content loss is (alpha)
 
-`style_weight`: how important style loss is (alpha)
+`style_weight`: how important style loss is (beta)
 
 `loss`: loss function
   - `l1`
@@ -156,9 +156,9 @@ The following configuration variables are important for generating style-transfe
 
 `num_epochs`: number of iterations to run
 
-`content_weight`: how important content loss is (beta)
+`content_weight`: how important content loss is (alpha)
 
-`style_weight`: how important style loss is (alpha)
+`style_weight`: how important style loss is (beta)
 
 `loss`: loss function
   - `l1`
