@@ -132,6 +132,8 @@ In the event that the file crashes, it will record your progress such that you c
 python create_test_nst.py content_prog
 ```
 
+Benson's note: Once you finished generating all the style-transferred images, you should delete `content_prog.txt` or rename it to something else if you choose to run another experiment since the code just appends to `content_prog.txt` to keep track of progress (it does not check `content_prog.txt` if you do not specify it). I should have written it better, but what I described will do for now.
+
 The following configuration variables are important for generating style-transferred images:
 
 `content_dir_path`: path of directory containing all the content images
