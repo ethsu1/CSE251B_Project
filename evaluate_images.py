@@ -29,12 +29,14 @@ parser.add_argument('--image-dir', default='', type=str, metavar='PATH',
                     help='path to directory for images to evaluate (e.g. ./eval_images/ or ./test_data/resnet34_l2_lbfgs/)')
 parser.add_argument('--save-dir', default='', type=str, metavar='PATH',
                     help='path for results (e.g. ./results/)')
-parser.add_argument('--img-size', default=256, type=int,
-                    metavar='N', help='dimension to resize images to (square, default: 256)')
+parser.add_argument('--img-size', default=512, type=int,
+                    metavar='N', help='dimension to resize images to (square, default: 512)')
 parser.add_argument('--model-path', default='', type=str, metavar='PATH',
                     help='path to pretrained model (e.g. models/model_best.pth.tar')
 parser.add_argument('--no-color', dest='no_color', action='store_true',
                     help='make all evaluation images monochrome')
+parser.add_argument('--trained-parallel', dest='trained_parallel', action='store_true',
+                    help='use this flag if model was trained w dataparallel')
 
 def main():
     global args
@@ -52,25 +54,21 @@ def main():
     # Check if model exists
     assert os.path.isfile(args.model_path), 'Selected model does not exist'
 
-    checkpoint = torch.load(args.model_path)
-    fcn_model = torchvision.models.resnet18(progress=True)
-    fcn_model.fc = nn.Linear(512, 2)
-    fcn_model.load_state_dict(checkpoint['state_dict'])
-
     # Select GPUs
     args.gpu = args.gpu.split(',')
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(args.gpu)
+
+    checkpoint = torch.load(args.model_path)
+    fcn_model = torchvision.models.resnet18(progress=True)
+    fcn_model.fc = nn.Linear(512, 2)
+    fcn_model = torch.nn.DataParallel(fcn_model, device_ids=range(len(args.gpu))).cuda()
+    fcn_model.load_state_dict(checkpoint['state_dict'])
 
     # Load Dataset
     image_dataset = EvalDataset(img_size=args.img_size, image_dir=args.image_dir, grayscale=args.no_color)
 
     image_loader = DataLoader(dataset=image_dataset, batch_size=args.batch_size, num_workers=args.workers, shuffle=False)
 
-    # Data parallelism w multiple GPUs
-    if len(args.gpu) > 1:
-        fcn_model = torch.nn.DataParallel(fcn_model, device_ids=range(len(args.gpu))).cuda()
-    else:
-        fcn_model = fcn_model.cuda()
 
     criterion = nn.CrossEntropyLoss().cuda()
 
@@ -79,7 +77,7 @@ def main():
     np.save(out_dir + 'eval_loss.npy', val_loss)
     np.save(out_dir + 'eval_acc.npy', val_acc)
     np.save(out_dir + 'predictions.npy', predictions)
-    np.save(out_dir + 'probabilities.npy', predictions)
+    np.save(out_dir + 'probabilities.npy', probabilities)
 
 def val(model, val_loader, criterion):
 
