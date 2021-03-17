@@ -25,8 +25,8 @@ class ImageDataset(Dataset):
         self.color_transforms = transforms.Compose([transforms.Grayscale(num_output_channels=3)])
         self.normalize = transforms.Compose([transforms.ToTensor(),
                                              transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        self.resize = transforms.Compose([transforms.Resize(img_size, interpolation=2),
-                                          transforms.CenterCrop(img_size)])
+        self.resize = transforms.Compose([transforms.Resize((img_size, img_size)),
+                                          transforms.CenterCrop((img_size, img_size))])
 
 
     def _read_index_files(self, data_mode, anime_index, real_index):
@@ -79,8 +79,8 @@ class EvalDataset(Dataset):
         self.color_transforms = transforms.Compose([transforms.Grayscale(num_output_channels=3)])
         self.normalize = transforms.Compose([transforms.ToTensor(),
                                              transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        self.resize = transforms.Compose([transforms.Resize(img_size, interpolation=2),
-                                          transforms.CenterCrop(img_size)])
+        self.resize = transforms.Compose([transforms.Resize((img_size, img_size)),
+                                          transforms.CenterCrop((img_size, img_size))])
 
     def __len__(self):
         return len(self.data)
