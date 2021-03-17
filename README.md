@@ -1,5 +1,7 @@
 # Neural Style Transfer
 
+PyTorch implementation of Neural Style Transfer with anime images and real-world photography. Builds upon the original research and implementation of Gatys et al. in ["A Neural Algorithm of Artistic Style"](https://arxiv.org/abs/1508.06576).
+
 ## Setup
 
 ### Anime Data
